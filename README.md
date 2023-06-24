@@ -1,6 +1,6 @@
-# MLOps Marathon 2023 - Sample solution
+# MLOps Marathon 2023
 
-This repository is the sample solution for MLOps Marathon 2023.
+This repository is the solution for MLOps Marathon 2023.
 
 ## Quickstart
 
@@ -51,7 +51,8 @@ This repository is the sample solution for MLOps Marathon 2023.
 
         ```bash
         export MLFLOW_TRACKING_URI=http://localhost:5000
-        python src/model_trainer.py --phase-id phase-1 --prob-id prob-1
+        python src/model_trainer.py --phase-id phase-1 --prob-id prob-1 --experiment-name exp1
+        python src/model_trainer.py --phase-id phase-1 --prob-id prob-2 --experiment-name exp2
         ```
 
     -   Register model: Go to mlflow UI at <http://localhost:5000> and register a new model named **phase-1_prob-1_model-1**
@@ -72,7 +73,7 @@ This repository is the sample solution for MLOps Marathon 2023.
         ```bash
         # run model predictor
         export MLFLOW_TRACKING_URI=http://localhost:5000
-        python src/model_predictor.py --config-path data/model_config/phase-1/prob-1/model-1.yaml --port 8000
+        python src/model_predictor.py --config-path data/model_config/phase-1 --port 8000
 
         # curl in another terminal
         curl -X POST http://localhost:8000/phase-1/prob-1/predict -H "Content-Type: application/json" -d @data/curl/phase-1/prob-1/payload-1.json
