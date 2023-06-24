@@ -1,1 +1,1 @@
-https://407c322b62faf2.lhr.life/
+http://ec2-18-207-114-218.compute-1.amazonaws.com:8000/

@@ -64,7 +64,7 @@ class ModelTrainer:
         signature = infer_signature(test_x, predictions)
         mlflow.sklearn.log_model(
             sk_model=model,
-            artifact_path=AppConfig.MLFLOW_MODEL_PREFIX,
+            artifact_path=AppConfig.MLFLOW_MODEL_PREFIX + prob_config.prob_id,
             signature=signature,
         )
         mlflow.end_run()
