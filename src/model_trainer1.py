@@ -12,7 +12,7 @@ from problem_config import (
     ProblemConst,
     get_prob_config,
 )
-from raw_data_processor import RawDataProcessor
+from raw_data_processor1 import RawDataProcessor
 from utils import AppConfig
 
 
@@ -30,11 +30,12 @@ class ModelTrainer:
         )
 
         # load train data
-        train_x, train_y = RawDataProcessor.load_train_data(prob_config)
+        train_x, train_y = RawDataProcessor.load_train_data(prob_config)  #Pre-Processing Data
         train_x = train_x.to_numpy()
         train_y = train_y.to_numpy()
         logging.info(f"loaded {len(train_x)} samples")
 
+            #Add Captured
         if add_captured_data:
             captured_x, captured_y = RawDataProcessor.load_capture_data(prob_config)
             captured_x = captured_x.to_numpy()
@@ -44,7 +45,7 @@ class ModelTrainer:
             logging.info(f"added {len(captured_x)} captured samples")
 
         # train model
-        if len(np.unique(train_y)) == 2:
+        if len(np.unique(train_y)) == 2: #Đếm số giá trị khác nhau của label để ứng dụng bài toán
             objective = "binary:logistic"
         else:
             objective = "multi:softprob"
@@ -54,9 +55,12 @@ class ModelTrainer:
         # evaluate
         test_x, test_y = RawDataProcessor.load_test_data(prob_config)
         predictions = model.predict(test_x)
-        auc_score = roc_auc_score(test_y, predictions)
+        auc_score = roc_auc_score(test_y, predictions) 
         metrics = {"test_auc": auc_score}
         logging.info(f"metrics: {metrics}")
+        print(metrics)
+
+
 
         # mlflow log
         mlflow.log_params(model.get_params())
@@ -73,14 +77,15 @@ class ModelTrainer:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p',"--phase-id", type=str, default=ProblemConst.PHASE1)
-    parser.add_argument('-i',"--prob-id", type=str, default=ProblemConst.PROB1)
     parser.add_argument('-e',"--experiment-name", type=str, default=ProblemConst.EXPERIMENT1)
 
     parser.add_argument(
         "--add-captured-data", type=lambda x: (str(x).lower() == "true"), default=False
     )
     args = parser.parse_args()
+    args.phase_id = 'phase-1'
+    args.prob_id = 'prob-1'
+
 
     prob_config = get_prob_config(args.phase_id, args.prob_id)
     model_config = {"random_state": prob_config.random_state}
