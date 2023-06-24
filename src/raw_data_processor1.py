@@ -10,7 +10,7 @@ from problem_config import ProblemConfig, ProblemConst, get_prob_config
     
 class RawDataProcessor():
     @staticmethod
-    def build_category_features(data, categorical_cols=None, prob_id):
+    def build_category_features(data, categorical_cols=None):
         if categorical_cols is None:
             categorical_cols = []
         category_index = {}
@@ -48,7 +48,7 @@ class RawDataProcessor():
         logging.info("start process_raw_data")
         training_data = pd.read_parquet(prob_config.raw_data_path)
         training_data, category_index = RawDataProcessor.build_category_features(
-            training_data, prob_config.categorical_cols, prob_config.prob_id
+            training_data, prob_config.categorical_cols
         )
         train, dev = train_test_split(
             training_data,
@@ -106,8 +106,6 @@ if __name__ == "__main__":
     parser.add_argument("--phase-id", type=str, default=ProblemConst.PHASE1)
     parser.add_argument("--prob-id", type=str, default=ProblemConst.PROB1)
     args = parser.parse_args()
-    args.phase_id = 'phase-1'
-    args.prob_id = 'prob-1'
 
     prob_config = get_prob_config(args.phase_id, args.prob_id)
     RawDataProcessor.process_raw_data(prob_config)
