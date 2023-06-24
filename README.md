@@ -52,9 +52,9 @@ This repository is the solution for MLOps Marathon 2023.
         ```bash
         export MLFLOW_TRACKING_URI=http://localhost:5000
         #TRAIN MODEL PROB 1
-        python src/model_trainer2.py
+        python src/model_trainer1.py --experiment-name exp1
         #TRAIN MODEL PROB 2
-        python src/model_trainer2.py
+        python src/model_trainer2.py --experiment-name exp1
         ```
 
     -   Register model: Go to mlflow UI at <http://localhost:5000> and register a new model named **phase-1_prob-1_model-1**
