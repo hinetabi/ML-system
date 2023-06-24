@@ -12,7 +12,7 @@ from problem_config import (
     ProblemConst,
     get_prob_config,
 )
-from raw_data_processor import RawDataProcessor
+from raw_data_processor1 import RawDataProcessor
 from utils import AppConfig
 
 
@@ -74,14 +74,14 @@ class ModelTrainer:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p',"--phase-id", type=str, default=ProblemConst.PHASE1)
-    parser.add_argument('-i',"--prob-id", type=str, default=ProblemConst.PROB1)
     parser.add_argument('-e',"--experiment-name", type=str, default=ProblemConst.EXPERIMENT1)
 
     parser.add_argument(
         "--add-captured-data", type=lambda x: (str(x).lower() == "true"), default=False
     )
     args = parser.parse_args()
+    args.phase_id = 'phase-1'
+    args.prob_id = 'prob-2'
 
     prob_config = get_prob_config(args.phase_id, args.prob_id)
     model_config = {"random_state": prob_config.random_state}
