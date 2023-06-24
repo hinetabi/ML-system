@@ -13,7 +13,8 @@ from pandas.util import hash_pandas_object
 from pydantic import BaseModel
 
 from problem_config import ProblemConst, create_prob_config
-from raw_data_processor1 import RawDataProcessor
+from raw_data_processor1 import RawDataProcessor as RawDataProcessor1
+from raw_data_processor2 import RawDataProcessor as RawDataProcessor2
 from utils import AppConfig, AppPath
 
 PREDICTOR_API_PORT = 8000
@@ -59,15 +60,23 @@ class ModelPredictor:
         return random.choice([0, 1])
 
     def predict(self, data: Data, prob="prob-1"):
+        
         start_time = time.time()
-
+        
         # preprocess
         raw_df = pd.DataFrame(data.rows, columns=data.columns)
-        feature_df = RawDataProcessor.apply_category_features(
-            raw_df=raw_df,
-            categorical_cols=self.prob_config[prob].categorical_cols,
-            category_index=self.category_index[prob],
-        )
+        if prob == 'prob-1':
+            feature_df = RawDataProcessor1.apply_category_features(
+                raw_df=raw_df,
+                categorical_cols=self.prob_config[prob].categorical_cols,
+                category_index=self.category_index[prob],
+            )
+        else:
+            feature_df = RawDataProcessor2.apply_category_features(
+                raw_df=raw_df,
+                categorical_cols=self.prob_config[prob].categorical_cols,
+                category_index=self.category_index[prob],
+            )
         # save request data for improving models
         ModelPredictor.save_request_data(
             feature_df, self.prob_config[prob].captured_data_dir, data.id
