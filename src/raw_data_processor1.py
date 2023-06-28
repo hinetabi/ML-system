@@ -4,11 +4,11 @@ import pickle
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
+from imblearn.over_sampling import SMOTE, RandomOverSampler
 from problem_config import ProblemConfig, ProblemConst, get_prob_config
 
-    
-class RawDataProcessor():
+
+class RawDataProcessor:
     @staticmethod
     def build_category_features(data, categorical_cols=None):
         if categorical_cols is None:
@@ -65,6 +65,8 @@ class RawDataProcessor():
         test_x = dev.drop([target_col], axis=1)
         test_y = dev[[target_col]]
 
+        train_x, train_y = RandomOverSampler().fit_resample(train_x, train_y)
+
         train_x.to_parquet(prob_config.train_x_path, index=False)
         train_y.to_parquet(prob_config.train_y_path, index=False)
         test_x.to_parquet(prob_config.test_x_path, index=False)
@@ -103,9 +105,9 @@ class RawDataProcessor():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--phase-id", type=str, default=ProblemConst.PHASE1)
-    parser.add_argument("--prob-id", type=str, default=ProblemConst.PROB1)
+    parser.add_argument("--final-model",type=bool, default=False)
+
     args = parser.parse_args()
 
-    prob_config = get_prob_config(args.phase_id, args.prob_id)
+    prob_config = get_prob_config("phase-1", "prob-1", args.final_model)
     RawDataProcessor.process_raw_data(prob_config)
