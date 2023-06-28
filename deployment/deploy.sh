@@ -4,7 +4,7 @@ cmd=$1
 
 # constants
 IMAGE_NAME="model_predictor"
-IMAGE_TAG=$(git describe --always)
+IMAGE_TAG="latest"
 
 if [[ -z "$cmd" ]]; then
     echo "Missing command"
@@ -22,11 +22,13 @@ run_predictor() {
         echo "Missing port"
         exit 1
     fi
+    echo $model_config_path
+    echo $port
 
-    docker build -f deployment/model_predictor/Dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
+    docker build -f deployment/model_predictor/Dockerfile -t $IMAGE_NAME:$IMAGE_TAG . 
     IMAGE_NAME=$IMAGE_NAME IMAGE_TAG=$IMAGE_TAG \
         MODEL_CONFIG_PATH=$model_config_path PORT=$port \
-        docker-compose -f deployment/model_predictor/docker-compose.yml up -d
+    docker-compose -f deployment/model_predictor/docker-compose.yml up -d
 }
 
 shift
