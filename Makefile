@@ -10,6 +10,15 @@ mlflow_up:
 mlflow_down:
 	docker-compose -f deployment/mlflow/docker-compose.yml down
 
+train_phase1:
+	python src/raw_data_processor1.py --final-model false
+	python src/model_trainer1.py -e exp1
+predict:
+	python src/model_predictor.py --config-path data/model_config/phase-1 --port 5040
+
+mlflow_remove_cache:
+	rm -rf deployment/mlflow/run_env/data/*
+	
 # predictor
 predictor_up:
 	bash deployment/deploy.sh run_predictor data/model_config/phase-1 5040
