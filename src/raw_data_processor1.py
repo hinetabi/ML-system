@@ -18,12 +18,11 @@ class RawDataProcessor:
             return data, category_index
 
         df = data.copy()
-
         # process category features
         for col in categorical_cols:
             df[col] = df[col].astype("category")
             category_index[col] = df[col].cat.categories
-        df = pd.get_dummies(df, columns=categorical_cols)
+            df[col] = df[col].cat.codes
         return df, category_index
 
     @staticmethod
