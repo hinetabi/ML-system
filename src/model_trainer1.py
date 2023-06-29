@@ -7,6 +7,7 @@ import xgboost as xgb
 from mlflow.models.signature import infer_signature
 from sklearn.metrics import roc_auc_score, f1_score
 from sklearn.ensemble import RandomForestClassifier
+from catboost import CatBoostClassifier
 
 from problem_config import (
     ProblemConfig,
@@ -57,7 +58,13 @@ class ModelTrainer:
         else:
             objective = "multi:softprob"
 
-        model = xgb.XGBClassifier(objective=objective, **model_params)
+        model = CatBoostClassifier(
+            learning_rate=0.01,
+            random_seed=0,
+            depth=8,
+            l2_leaf_reg=3.0,
+            border_count=254,
+        )
         model.fit(train_x, train_y)
 
         # evaluate
