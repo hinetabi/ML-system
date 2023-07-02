@@ -38,6 +38,7 @@ class ProblemConfig:
     captured_x_path: str
     uncertain_y_path: str
 
+    missing_value_replace_path: str
 
 def load_feature_configs_dict(config_path: str) -> dict:
     with open(config_path) as f:
@@ -96,6 +97,9 @@ def create_prob_config(phase_id: str, prob_id: str, train = False) -> ProblemCon
         prob_config.processed_captured_data_dir / "uncertain_y.parquet"
     )
 
+    prob_config.missing_value_replace_path = (
+        prob_config.train_data_path / "missing_value_replace.json"
+    )
     return prob_config
 
 
