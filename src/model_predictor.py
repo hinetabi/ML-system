@@ -84,9 +84,8 @@ class ModelPredictor:
         significance_level = 0.05
 
         for i in range(num_features):
-            train_data = self.train_features[prob].iloc[:, i]
-            test_data = feature_df.iloc[:, i]
-
+            train_data = self.train_features[prob][f'feature{i+1}']
+            test_data = feature_df[f'feature{i+1}']
             _, p_value = stats.ks_2samp(train_data, test_data)
 
             if p_value > significance_level:
@@ -101,7 +100,6 @@ class ModelPredictor:
 
         # preprocess
         raw_df = pd.DataFrame(data.rows, columns=data.columns)
-        print(raw_df)
         if prob == "prob-1":
             feature_df = RawDataProcessor1.apply_category_features(
                 raw_df=raw_df,
