@@ -4,7 +4,7 @@ import pickle
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import SMOTE, RandomOverSampler
+# from imblearn.over_sampling import SMOTE, RandomOverSampler
 from problem_config import ProblemConfig, ProblemConst, get_prob_config
 
 
@@ -65,7 +65,7 @@ class RawDataProcessor:
         test_x = dev.drop([target_col], axis=1)
         test_y = dev[[target_col]]
 
-        train_x, train_y = RandomOverSampler().fit_resample(train_x, train_y)
+        # train_x, train_y = RandomOverSampler().fit_resample(train_x, train_y)
 
         train_x.to_parquet(prob_config.train_x_path, index=False)
         train_y.to_parquet(prob_config.train_y_path, index=False)
