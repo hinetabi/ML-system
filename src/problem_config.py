@@ -45,11 +45,14 @@ def load_feature_configs_dict(config_path: str) -> dict:
     return features_config
 
 
-def create_prob_config(phase_id: str, prob_id: str) -> ProblemConfig:
+def create_prob_config(phase_id: str, prob_id: str, train = False) -> ProblemConfig:
     prob_config = ProblemConfig()
     prob_config.prob_id = prob_id
     prob_config.phase_id = phase_id
-    prob_config.test_size = 0.2
+    if train:
+        prob_config.test_size = 1e-4
+    else:
+        prob_config.test_size = 0.2
     prob_config.random_state = 123
 
     # construct data paths for original data
@@ -96,6 +99,6 @@ def create_prob_config(phase_id: str, prob_id: str) -> ProblemConfig:
     return prob_config
 
 
-def get_prob_config(phase_id: str, prob_id: str):
-    prob_config = create_prob_config(phase_id, prob_id)
+def get_prob_config(phase_id: str, prob_id: str, train=False):
+    prob_config = create_prob_config(phase_id, prob_id, train)
     return prob_config
