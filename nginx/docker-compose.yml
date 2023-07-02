@@ -1,12 +1,10 @@
 version: '3.7'
 services:
-  
-
   gateway:
     image: nginx
     ports:
       - 8000:80
-    # network_mode: "host"
+    container_name: nginx
     networks:
       - app-network
     restart: no
