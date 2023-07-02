@@ -1,5 +1,19 @@
 version: "3.7"
 services:
+  mlflow:
+    build:
+      context: ../mlflow/mlflow/
+    command:
+      - bash
+      - -c
+      - "mlflow server --backend-store-uri sqlite:////mlflow/mlflow.db --serve-artifacts --host 0.0.0.0 --port 5000"
+    ports:
+      - 5000:5000
+    expose:
+      - "5000"
+    volumes:
+      - ../mlflow/run_env/data:/mlflow
+      
   model_predictor_1:
     image: ${IMAGE_NAME}:${IMAGE_TAG}
     restart: no
@@ -15,7 +29,9 @@ services:
       - 3000
     environment:
       MODEL_CONFIG_PATH: ${MODEL_CONFIG_PATH}
-      MLFLOW_TRACKING_URI: http://172.17.0.1:5000/
+      MLFLOW_TRACKING_URI: http://mlflow:5000/
+    depends_on:
+      - mlflow
     extra_hosts:
       - "host.docker.internal:host-gateway"
     entrypoint: /bin/sh -c "python src/model_predictor.py --config-path ${MODEL_CONFIG_PATH} --port 3000"
@@ -35,7 +51,9 @@ services:
       - 5040
     environment:
       MODEL_CONFIG_PATH: ${MODEL_CONFIG_PATH}
-      MLFLOW_TRACKING_URI: http://172.17.0.1:5000/
+      MLFLOW_TRACKING_URI: http://mlflow:5000/
+    depends_on:
+      - mlflow
     entrypoint: /bin/sh -c "python src/model_predictor.py --config-path ${MODEL_CONFIG_PATH} --port 5040"
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -57,6 +75,7 @@ services:
     networks:
       - app-network
     depends_on:
+      - mlflow
       - model_predictor_1
       - model_predictor_2
 
