@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 # from imblearn.over_sampling import SMOTE, RandomOverSampler
 from problem_config import ProblemConfig, ProblemConst, get_prob_config
-
+import json
 
 class RawDataProcessor:
     @staticmethod
@@ -46,7 +46,12 @@ class RawDataProcessor:
     @staticmethod
     def process_raw_data(prob_config: ProblemConfig):
         logging.info("start process_raw_data")
-        training_data = pd.read_parquet(prob_config.raw_data_path)
+        training_data = pd.read_parquet(prob_config.raw_data_path).astype("str")
+
+        # save max feq
+        max_feq = RawDataProcessor.save_max_feq(prob_config)
+        logging.info(f"max_feq: {max_feq}")
+        
         training_data, category_index = RawDataProcessor.build_category_features(
             training_data, prob_config.categorical_cols
         )
@@ -101,7 +106,23 @@ class RawDataProcessor:
         captured_x = pd.read_parquet(captured_x_path)
         captured_y = pd.read_parquet(captured_y_path)
         return captured_x, captured_y[prob_config.target_col]
-
+    
+    @staticmethod
+    def save_max_feq(prob_config: ProblemConfig):
+        training_data = pd.read_parquet(prob_config.raw_data_path).astype("str")
+        most_feq = {}
+        for i in training_data.columns:
+            max_feq_element = training_data[i].mode()[0]
+            most_feq[i] = max_feq_element
+        with open(prob_config.missing_value_replace_path, "w") as f:
+            json.dump(most_feq, f)
+        return most_feq
+    
+    @staticmethod
+    def load_max_feq_dict(prob_config: ProblemConfig):
+        with open(prob_config.missing_value_replace_path, "r") as f:
+            most_feq = json.load(f)
+        return most_feq
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
