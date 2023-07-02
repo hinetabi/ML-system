@@ -17,13 +17,6 @@ from raw_data_processor1 import RawDataProcessor as RawDataProcessor1
 from raw_data_processor2 import RawDataProcessor as RawDataProcessor2
 from utils import AppConfig, AppPath
 
-from raw_data_processor1 import RawDataProcessor
-from problem_config import (
-    ProblemConfig,
-    ProblemConst,
-    get_prob_config,
-)
-
 from scipy import stats
 import pyarrow.parquet as pq
 
@@ -48,6 +41,8 @@ class ModelPredictor:
         self.config = {}
         self.category_index = {}
         self.prob_config = {}
+        self.pFile = {}
+        self.train_features = {}
 
         for prob in ["prob-1", "prob-2"]:
             with open(
@@ -64,11 +59,10 @@ class ModelPredictor:
 
             # load category_index
 
-            if config_file_path[18:] == 'phase-1':
+            if prob == 'prob-1':
                 self.category_index[prob] = RawDataProcessor1.load_category_index(self.prob_config[prob])
-            elif config_file_path[18:] == 'phase-2':
+            else:
                 self.category_index[prob] = RawDataProcessor2.load_category_index(self.prob_config[prob])
-
 
             # load model
             model_uri = os.path.join(
@@ -79,21 +73,21 @@ class ModelPredictor:
             model_uri = model_uri.replace("\\", "/")
             self.model[prob] = mlflow.pyfunc.load_model(model_uri)
 
-
+            # load data drift
+            self.pFile[prob] = pq.ParquetFile(self.prob_config[prob].train_x_path)
+            self.train_features[prob] = self.pFile[prob].read().to_pandas()
 
         
-    def detect_drift(self, feature_df) -> int:
-        pFile = pq.ParquetFile("/home/h2nsayhi/code/phase1/data/train_data/phase-1/prob-1/train_x.parquet")
-        train_features = pFile.read().to_pandas()
+    def detect_drift(self, feature_df, prob) -> int:
 
-        num_features = train_features.shape[1]
+        num_features = self.train_features[prob].shape[1]
         significance_level = 0.05
 
         for i in range(num_features):
-            train_data = train_features.iloc[:, i]
+            train_data = self.train_features[prob].iloc[:, i]
             test_data = feature_df.iloc[:, i]
 
-            ks_statistic, p_value = stats.ks_2samp(train_data, test_data)
+            _, p_value = stats.ks_2samp(train_data, test_data)
 
             if p_value > significance_level:
                 pass
@@ -107,6 +101,7 @@ class ModelPredictor:
 
         # preprocess
         raw_df = pd.DataFrame(data.rows, columns=data.columns)
+        print(raw_df)
         if prob == "prob-1":
             feature_df = RawDataProcessor1.apply_category_features(
                 raw_df=raw_df,
@@ -126,7 +121,7 @@ class ModelPredictor:
         )
 
         prediction = self.model[prob].predict(feature_df)
-        is_drifted = self.detect_drift(feature_df)
+        is_drifted = self.detect_drift(feature_df, prob)
 
         run_time = round((time.time() - start_time) * 1000, 0)
         logging.info(f"prediction takes {run_time} ms")
@@ -142,8 +137,8 @@ class ModelPredictor:
             filename = data_id
         else:
             filename = hash_pandas_object(feature_df).sum()
-        output_file_path = os.path.join(captured_data_dir, f"{filename}.parquet")
-        feature_df.to_parquet(output_file_path, index=False)
+        output_file_path = os.path.join(captured_data_dir, f"{filename}.csv")
+        feature_df.to_csv(output_file_path, index=False)
         return output_file_path
 
 
