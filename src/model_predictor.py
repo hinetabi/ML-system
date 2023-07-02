@@ -17,6 +17,16 @@ from raw_data_processor1 import RawDataProcessor as RawDataProcessor1
 from raw_data_processor2 import RawDataProcessor as RawDataProcessor2
 from utils import AppConfig, AppPath
 
+from raw_data_processor1 import RawDataProcessor
+from problem_config import (
+    ProblemConfig,
+    ProblemConst,
+    get_prob_config,
+)
+
+from scipy import stats
+import pyarrow.parquet as pq
+
 PREDICTOR_API_PORT = 8000
 
 
@@ -28,10 +38,12 @@ class Data(BaseModel):
 
 class ModelPredictor:
     def __init__(self, config_file_path):
+
         config_file_path_specific = {
             "prob-1": "prob-1/model-1.yaml",
             "prob-2": "prob-2/model-1.yaml",
         }
+
         self.model = {}
         self.config = {}
         self.category_index = {}
@@ -51,9 +63,12 @@ class ModelPredictor:
             )
 
             # load category_index
-            self.category_index[prob] = RawDataProcessor1.load_category_index(
-                self.prob_config[prob]
-            )
+
+            if config_file_path[18:] == 'phase-1':
+                self.category_index[prob] = RawDataProcessor1.load_category_index(self.prob_config[prob])
+            elif config_file_path[18:] == 'phase-2':
+                self.category_index[prob] = RawDataProcessor2.load_category_index(self.prob_config[prob])
+
 
             # load model
             model_uri = os.path.join(
@@ -64,10 +79,28 @@ class ModelPredictor:
             model_uri = model_uri.replace("\\", "/")
             self.model[prob] = mlflow.pyfunc.load_model(model_uri)
 
+
+
+        
     def detect_drift(self, feature_df) -> int:
-        # watch drift between coming requests and training data
-        time.sleep(0.02)
-        return random.choice([0, 1])
+        pFile = pq.ParquetFile("/home/h2nsayhi/code/phase1/data/train_data/phase-1/prob-1/train_x.parquet")
+        train_features = pFile.read().to_pandas()
+
+        num_features = train_features.shape[1]
+        significance_level = 0.05
+
+        for i in range(num_features):
+            train_data = train_features.iloc[:, i]
+            test_data = feature_df.iloc[:, i]
+
+            ks_statistic, p_value = stats.ks_2samp(train_data, test_data)
+
+            if p_value > significance_level:
+                pass
+            else:
+                return 1
+        return 0
+
 
     def predict(self, data: Data, prob="prob-1"):
         start_time = time.time()
@@ -163,5 +196,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     predictor = ModelPredictor(config_file_path=args.config_path)
+
+
     api = PredictorApi(predictor)
     api.run(port=args.port)
