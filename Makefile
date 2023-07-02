@@ -13,7 +13,7 @@ mlflow_down:
 # delete model cache
 mlflow_detele_cache:
 	rm -rf deployment/mlflow/run_env/data/*
-
+  
 # predictor
 predictor_up:
 	bash deployment/deploy.sh run_predictor data/model_config/phase-1 8000
