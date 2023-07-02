@@ -38,15 +38,21 @@ class Data(BaseModel):
 
 class ModelPredictor:
     def __init__(self, config_file_path):
-        # print(config_file_path[18:])
-        config_file_path_specific = {"prob-1": "prob-1/model-1.yaml", "prob-2":"prob-2/model-1.yaml"}
+
+        config_file_path_specific = {
+            "prob-1": "prob-1/model-1.yaml",
+            "prob-2": "prob-2/model-1.yaml",
+        }
+
         self.model = {}
         self.config = {}
         self.category_index = {}
         self.prob_config = {}
 
-        for prob in ["prob-1", "prob-2"]:
-            with open(os.path.join(config_file_path, config_file_path_specific[prob]), "r") as f:
+        for prob in ["prob-1"]:
+            with open(
+                os.path.join(config_file_path, config_file_path_specific[prob]), "r"
+            ) as f:
                 self.config[prob] = yaml.safe_load(f)
             logging.info(f"model-config: {self.config[prob]}")
 
@@ -57,15 +63,20 @@ class ModelPredictor:
             )
 
             # load category_index
+
             if config_file_path[18:] == 'phase-1':
                 self.category_index[prob] = RawDataProcessor1.load_category_index(self.prob_config[prob])
             elif config_file_path[18:] == 'phase-2':
                 self.category_index[prob] = RawDataProcessor2.load_category_index(self.prob_config[prob])
 
+
             # load model
             model_uri = os.path.join(
-                "models:/", self.config[prob]["model_name"], str(self.config[prob]["model_version"])
+                "models:/",
+                self.config[prob]["model_name"],
+                str(self.config[prob]["model_version"]),
             )
+            model_uri = model_uri.replace("\\", "/")
             self.model[prob] = mlflow.pyfunc.load_model(model_uri)
 
 
@@ -92,12 +103,11 @@ class ModelPredictor:
 
 
     def predict(self, data: Data, prob="prob-1"):
-        
         start_time = time.time()
-        
+
         # preprocess
         raw_df = pd.DataFrame(data.rows, columns=data.columns)
-        if prob == 'prob-1':
+        if prob == "prob-1":
             feature_df = RawDataProcessor1.apply_category_features(
                 raw_df=raw_df,
                 categorical_cols=self.prob_config[prob].categorical_cols,
@@ -109,6 +119,7 @@ class ModelPredictor:
                 categorical_cols=self.prob_config[prob].categorical_cols,
                 category_index=self.category_index[prob],
             )
+            
         # save request data for improving models
         ModelPredictor.save_request_data(
             feature_df, self.prob_config[prob].captured_data_dir, data.id
@@ -151,13 +162,13 @@ class PredictorApi:
             response = self.predictor.predict(data, prob="prob-1")
             self._log_response(response)
             return response
-        
-        @self.app.post("/phase-1/prob-2/predict")
-        async def predict(data: Data, request: Request):
-            self._log_request(request)
-            response = self.predictor.predict(data, prob="prob-2")
-            self._log_response(response)
-            return response
+
+        # @self.app.post("/phase-1/prob-2/predict")
+        # async def predict(data: Data, request: Request):
+        #     self._log_request(request)
+        #     response = self.predictor.predict(data, prob="prob-2")
+        #     self._log_response(response)
+        #     return response
 
     @staticmethod
     def _log_request(request: Request):
@@ -172,15 +183,15 @@ class PredictorApi:
 
 
 if __name__ == "__main__":
-    default_config_path = (
-        AppPath.MODEL_CONFIG_DIR
-        / ProblemConst.PHASE1
-        / ProblemConst.PROB1
-        / "model-1.yaml"
-    ).as_posix()
+    # default_config_path = (
+    #     AppPath.MODEL_CONFIG_DIR
+    #     / ProblemConst.PHASE1
+    #     / ProblemConst.PROB1
+    #     / "model-1.yaml"
+    # ).as_posix()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config-path", type=str, default=default_config_path)
+    parser.add_argument("--config-path", type=str, required=True)
     parser.add_argument("--port", type=int, default=PREDICTOR_API_PORT)
     args = parser.parse_args()
 
