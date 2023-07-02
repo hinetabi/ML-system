@@ -5,8 +5,7 @@ import mlflow
 import numpy as np
 import xgboost as xgb
 from mlflow.models.signature import infer_signature
-from sklearn.metrics import roc_auc_score, f1_score
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score
 
 from problem_config import (
     ProblemConfig,
@@ -15,7 +14,7 @@ from problem_config import (
 )
 from raw_data_processor1 import RawDataProcessor
 from utils import AppConfig
-
+from catboost import CatBoostClassifier
 
 class ModelTrainer:
     @staticmethod
@@ -57,7 +56,13 @@ class ModelTrainer:
         else:
             objective = "multi:softprob"
 
-        model = xgb.XGBClassifier(objective=objective, **model_params)
+        model = CatBoostClassifier(
+            learning_rate=0.1,
+            random_seed=0,
+            depth=8,
+            l2_leaf_reg=3.0,
+            border_count=254,
+        )
         model.fit(train_x, train_y)
 
         # evaluate
@@ -72,11 +77,12 @@ class ModelTrainer:
         mlflow.log_params(model.get_params())
         mlflow.log_metrics(metrics)
         signature = infer_signature(test_x, predictions)
-        mlflow.sklearn.log_model(
-            sk_model=model,
+        mlflow.catboost.log_model(
+            cb_model=model,
             artifact_path=AppConfig.MLFLOW_MODEL_PREFIX + prob_config.prob_id,
             signature=signature,
         )
+
         mlflow.end_run()
         logging.info("finish train_model")
 
