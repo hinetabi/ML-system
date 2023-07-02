@@ -1,11 +1,12 @@
 import argparse
 import logging
-
+from sklearn.svm import SVC
 import mlflow
 import numpy as np
 import xgboost as xgb
 from mlflow.models.signature import infer_signature
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, f1_score
+from sklearn.ensemble import RandomForestClassifier
 
 from problem_config import (
     ProblemConfig,
@@ -55,6 +56,7 @@ class ModelTrainer:
             objective = "binary:logistic"
         else:
             objective = "multi:softprob"
+
         model = xgb.XGBClassifier(objective=objective, **model_params)
         model.fit(train_x, train_y)
 
@@ -64,6 +66,7 @@ class ModelTrainer:
         auc_score = roc_auc_score(test_y, predictions)
         metrics = {"test_auc": auc_score}
         logging.info(f"metrics: {metrics}")
+        print(metrics)
 
         # mlflow log
         mlflow.log_params(model.get_params())
@@ -81,7 +84,7 @@ class ModelTrainer:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-e", "--experiment-name", type=str, default=ProblemConst.EXPERIMENT1
+        "-e", "--experiment-name", type=str, default=ProblemConst.EXPERIMENT1, required=True
     )
 
     parser.add_argument(

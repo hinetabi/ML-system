@@ -39,6 +39,44 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  model_predictor_3:
+    image: ${IMAGE_NAME}:${IMAGE_TAG} 
+    container_name: model_predictor3
+    volumes:
+      - ../../data/raw_data:/sample_solution/data/raw_data
+      - ../../data/train_data:/sample_solution/data/train_data
+      - ../../data/model_config:/sample_solution/data/model_config
+      - ../../data/captured_data:/sample_solution/data/captured_data
+    ports:
+      - "10000:8000"
+    expose:
+      - 8000
+    environment:
+      MODEL_CONFIG_PATH: ${MODEL_CONFIG_PATH}
+      MLFLOW_TRACKING_URI: http://172.17.0.1:5000/
+    entrypoint: /bin/sh -c "python src/model_predictor.py --config-path ${MODEL_CONFIG_PATH} --port 8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  model_predictor_4:
+    image: ${IMAGE_NAME}:${IMAGE_TAG} 
+    container_name: model_predictor4
+    volumes:
+      - ../../data/raw_data:/sample_solution/data/raw_data
+      - ../../data/train_data:/sample_solution/data/train_data
+      - ../../data/model_config:/sample_solution/data/model_config
+      - ../../data/captured_data:/sample_solution/data/captured_data
+    ports:
+      - "11000:8000"
+    expose:
+      - 8000
+    environment:
+      MODEL_CONFIG_PATH: ${MODEL_CONFIG_PATH}
+      MLFLOW_TRACKING_URI: http://172.17.0.1:5000/
+    entrypoint: /bin/sh -c "python src/model_predictor.py --config-path ${MODEL_CONFIG_PATH} --port 8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   gateway:
     image: nginx
     ports:
@@ -55,3 +93,4 @@ services:
     depends_on:
       - model_predictor_1
       - model_predictor_2
+      - model_predictor_3
