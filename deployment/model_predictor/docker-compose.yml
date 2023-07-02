@@ -1,5 +1,6 @@
 version: "3.7"
 services:
+      
   model_predictor_1:
     image: ${IMAGE_NAME}:${IMAGE_TAG}
     restart: no
@@ -10,7 +11,7 @@ services:
       - ../../data/model_config:/sample_solution/data/model_config
       - ../../data/captured_data:/sample_solution/data/captured_data
     ports:
-      - "3000"
+      - "3000:3000"
     expose:
       - 3000
     environment:
@@ -30,13 +31,13 @@ services:
       - ../../data/model_config:/sample_solution/data/model_config
       - ../../data/captured_data:/sample_solution/data/captured_data
     ports:
-      - "5040"
+      - "8000:8000"
     expose:
-      - 5040
+      - 8000
     environment:
       MODEL_CONFIG_PATH: ${MODEL_CONFIG_PATH}
       MLFLOW_TRACKING_URI: http://172.17.0.1:5000/
-    entrypoint: /bin/sh -c "python src/model_predictor.py --config-path ${MODEL_CONFIG_PATH} --port 5040"
+    entrypoint: /bin/sh -c "python src/model_predictor.py --config-path ${MODEL_CONFIG_PATH} --port 8000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -54,11 +55,11 @@ services:
       - bash
       - -c
       - 'nginx -g "daemon off;"'
-    networks:
-      - app-network
     depends_on:
       - model_predictor_1
       - model_predictor_2
 
 networks:
   app-network:
+    name: custom_network
+    external: true

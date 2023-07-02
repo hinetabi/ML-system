@@ -16,7 +16,7 @@ mlflow_detele_cache:
   
 # predictor
 predictor_up:
-	bash deployment/deploy.sh run_predictor data/model_config/phase-1 8000
+	bash deployment/deploy.sh run_predictor data/model_config/phase-1 5040
 
 predictor_down:
 	PORT=5040 docker-compose -f deployment/model_predictor/docker-compose.yml down
