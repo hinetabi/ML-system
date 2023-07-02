@@ -37,7 +37,7 @@ class ModelPredictor:
         self.category_index = {}
         self.prob_config = {}
 
-        for prob in ["prob-1"]:
+        for prob in ["prob-1", "prob-2"]:
             with open(
                 os.path.join(config_file_path, config_file_path_specific[prob]), "r"
             ) as f:
@@ -130,12 +130,12 @@ class PredictorApi:
             self._log_response(response)
             return response
 
-        # @self.app.post("/phase-1/prob-2/predict")
-        # async def predict(data: Data, request: Request):
-        #     self._log_request(request)
-        #     response = self.predictor.predict(data, prob="prob-2")
-        #     self._log_response(response)
-        #     return response
+        @self.app.post("/phase-1/prob-2/predict")
+        async def predict(data: Data, request: Request):
+            self._log_request(request)
+            response = self.predictor.predict(data, prob="prob-2")
+            self._log_response(response)
+            return response
 
     @staticmethod
     def _log_request(request: Request):
