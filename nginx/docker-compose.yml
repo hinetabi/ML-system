@@ -16,6 +16,10 @@ services:
       - 'nginx -g "daemon off;"'
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - app-network
 
 networks:
   app-network:
+    name: app-net
+    external: true

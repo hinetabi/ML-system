@@ -20,6 +20,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     entrypoint: /bin/sh -c "python src/model_predictor.py --config-path ${MODEL_CONFIG_PATH} --port 3000"
+    networks:
+      - app-network
 
   model_predictor_2:
     image: ${IMAGE_NAME}:${IMAGE_TAG} 
@@ -40,6 +42,8 @@ services:
     entrypoint: /bin/sh -c "python src/model_predictor.py --config-path ${MODEL_CONFIG_PATH} --port 5040"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - app-network
 
   gateway:
     image: nginx
@@ -58,8 +62,10 @@ services:
     depends_on:
       - model_predictor_1
       - model_predictor_2
+    networks:
+      - app-network
 
 networks:
   app-network:
-    name: custom_network
+    name: app-net
     external: true

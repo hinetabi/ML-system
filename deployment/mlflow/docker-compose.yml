@@ -16,4 +16,5 @@ services:
     
 networks:
   app-network:
-    name: custom_network
+    name: app-net
+    driver: bridge
