@@ -53,6 +53,7 @@ class ModelPredictor:
 
             mlflow.set_tracking_uri(AppConfig.MLFLOW_TRACKING_URI)
 
+
             self.prob_config[prob] = create_prob_config(
                 self.config[prob]["phase_id"], self.config[prob]["prob_id"]
             )
@@ -78,7 +79,7 @@ class ModelPredictor:
 
             # load data drift
             self.pFile[prob] = pq.ParquetFile(self.prob_config[prob].train_x_path)
-            self.train_features[prob] = self.pFile[prob].read().to_pandas().astype("float")
+            self.train_features[prob] = self.pFile[prob].read().to_pandas()
 
 
         
@@ -111,12 +112,16 @@ class ModelPredictor:
         ModelPredictor.save_request_data(
             raw_df, self.prob_config[prob].captured_data_dir, data.id
         )
-
+        
         if prob == "prob-1":
             # handling missing data, replace missing with self.max_feq_data
             for column in raw_df.columns:
-                raw_df[column] = raw_df[column].fillna(self.max_feq_data[prob][column])
-                
+                try:
+                    self.max_feq_data[prob][column] = float(self.max_feq_data[prob][column])
+                except:
+                    raw_df[column] = raw_df[column].fillna(self.max_feq_data[prob][column])
+            # logging.info(f"missing data replaced with self.max_feq_data")
+            # logging.info(f"missing data count = {raw_df.isna().sum()}")
             feature_df = RawDataProcessor1.apply_category_features(
                 raw_df=raw_df,
                 categorical_cols=self.prob_config[prob].categorical_cols,
@@ -128,8 +133,9 @@ class ModelPredictor:
                 categorical_cols=self.prob_config[prob].categorical_cols,
                 category_index=self.category_index[prob],
             )
-            
 
+        # logging.info(f'feature df = {feature_df}')
+        feature_df = feature_df.astype("float")
         prediction = self.model[prob].predict(feature_df)
         is_drifted = self.detect_drift(feature_df, prob)
 
@@ -197,9 +203,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--config-path", type=str, required=True)
-    parser.add_argument("--port", type=int, default=PREDICTOR_API_PORT)
+    parser.add_argument("--port", type=int, default=5040)
     args = parser.parse_args()
 
+    # args.config_path = "data/model_config/phase-1/"
     predictor = ModelPredictor(config_file_path=args.config_path)
 
 
