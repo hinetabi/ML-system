@@ -46,15 +46,18 @@ class RawDataProcessor:
     @staticmethod
     def process_raw_data(prob_config: ProblemConfig):
         logging.info("start process_raw_data")
-        training_data = pd.read_parquet(prob_config.raw_data_path).astype("str")
+        training_data = pd.read_parquet(prob_config.raw_data_path)
 
         # save max feq
         max_feq = RawDataProcessor.save_max_feq(prob_config)
         logging.info(f"max_feq: {max_feq}")
-        
+
         training_data, category_index = RawDataProcessor.build_category_features(
             training_data, prob_config.categorical_cols
         )
+
+        training_data = training_data.astype("float")
+
         train, dev = train_test_split(
             training_data,
             test_size=prob_config.test_size,
@@ -109,11 +112,14 @@ class RawDataProcessor:
     
     @staticmethod
     def save_max_feq(prob_config: ProblemConfig):
-        training_data = pd.read_parquet(prob_config.raw_data_path).astype("str")
+        training_data = pd.read_parquet(prob_config.raw_data_path)
         most_feq = {}
         for i in training_data.columns:
             max_feq_element = training_data[i].mode()[0]
-            most_feq[i] = max_feq_element
+            if (isinstance(max_feq_element, str)):
+                most_feq[i] = max_feq_element
+            else:
+                most_feq[i] = float(max_feq_element)
         with open(prob_config.missing_value_replace_path, "w") as f:
             json.dump(most_feq, f)
         return most_feq
