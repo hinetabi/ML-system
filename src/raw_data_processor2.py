@@ -4,11 +4,11 @@ import pickle
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
+# from imblearn.over_sampling import SMOTE, RandomOverSampler
 from problem_config import ProblemConfig, ProblemConst, get_prob_config
+import json
 
-    
-class RawDataProcessor():
+class RawDataProcessor:
     @staticmethod
     def build_category_features(data, categorical_cols=None):
         if categorical_cols is None:
@@ -47,9 +47,17 @@ class RawDataProcessor():
     def process_raw_data(prob_config: ProblemConfig):
         logging.info("start process_raw_data")
         training_data = pd.read_parquet(prob_config.raw_data_path)
+
+        # save max feq
+        max_feq = RawDataProcessor.save_max_feq(prob_config)
+        logging.info(f"max_feq: {max_feq}")
+
         training_data, category_index = RawDataProcessor.build_category_features(
             training_data, prob_config.categorical_cols
         )
+
+        training_data = training_data.astype("float")
+
         train, dev = train_test_split(
             training_data,
             test_size=prob_config.test_size,
@@ -64,6 +72,8 @@ class RawDataProcessor():
         train_y = train[[target_col]]
         test_x = dev.drop([target_col], axis=1)
         test_y = dev[[target_col]]
+
+        # train_x, train_y = RandomOverSampler().fit_resample(train_x, train_y)
 
         train_x.to_parquet(prob_config.train_x_path, index=False)
         train_y.to_parquet(prob_config.train_y_path, index=False)
@@ -99,13 +109,32 @@ class RawDataProcessor():
         captured_x = pd.read_parquet(captured_x_path)
         captured_y = pd.read_parquet(captured_y_path)
         return captured_x, captured_y[prob_config.target_col]
-
+    
+    @staticmethod
+    def save_max_feq(prob_config: ProblemConfig):
+        training_data = pd.read_parquet(prob_config.raw_data_path)
+        most_feq = {}
+        for i in training_data.columns:
+            max_feq_element = training_data[i].mode()[0]
+            if (isinstance(max_feq_element, str)):
+                most_feq[i] = max_feq_element
+            else:
+                most_feq[i] = float(max_feq_element)
+        with open(prob_config.missing_value_replace_path, "w") as f:
+            json.dump(most_feq, f)
+        return most_feq
+    
+    @staticmethod
+    def load_max_feq_dict(prob_config: ProblemConfig):
+        with open(prob_config.missing_value_replace_path, "r") as f:
+            most_feq = json.load(f)
+        return most_feq
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--phase-id", type=str, default=ProblemConst.PHASE1)
-    parser.add_argument("--prob-id", type=str, default=ProblemConst.PROB1)
+    parser.add_argument("--final-model",type=bool, default=False)
+
     args = parser.parse_args()
 
-    prob_config = get_prob_config(args.phase_id, args.prob_id)
+    prob_config = get_prob_config("phase-1", "prob-2", args.final_model)
     RawDataProcessor.process_raw_data(prob_config)

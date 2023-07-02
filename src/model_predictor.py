@@ -53,7 +53,6 @@ class ModelPredictor:
 
             mlflow.set_tracking_uri(AppConfig.MLFLOW_TRACKING_URI)
 
-
             self.prob_config[prob] = create_prob_config(
                 self.config[prob]["phase_id"], self.config[prob]["prob_id"]
             )
@@ -65,7 +64,7 @@ class ModelPredictor:
                 self.max_feq_data[prob] = RawDataProcessor1.load_max_feq_dict(self.prob_config[prob])
             else:
                 self.category_index[prob] = RawDataProcessor2.load_category_index(self.prob_config[prob])
-                # self.max_feq_data[prob] = RawDataProcessor1.load_max_feq_dict(self.prob_config[prob])
+                self.max_feq_data[prob] = RawDataProcessor2.load_max_feq_dict(self.prob_config[prob])
 
 
             # load model
@@ -97,8 +96,8 @@ class ModelPredictor:
             if p_value > significance_level:
                 pass
             else:
-                return 1
-        return 0
+                return 0
+        return 1
 
 
     def predict(self, data: Data, prob="prob-1"):
@@ -128,6 +127,12 @@ class ModelPredictor:
                 category_index=self.category_index[prob],
             )
         else:
+            for column in raw_df.columns:
+                try:
+                    self.max_feq_data[prob][column] = float(self.max_feq_data[prob][column])
+                except:
+                    raw_df[column] = raw_df[column].fillna(self.max_feq_data[prob][column])
+
             feature_df = RawDataProcessor2.apply_category_features(
                 raw_df=raw_df,
                 categorical_cols=self.prob_config[prob].categorical_cols,
