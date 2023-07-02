@@ -12,7 +12,7 @@ if [[ -z "$cmd" ]]; then
 fi
 
 run_predictor() {
-    model_config_path=$1
+    model_config_path=
     port=$2
     if [[ -z "$model_config_path" ]]; then
         echo "Missing model_config_path"
