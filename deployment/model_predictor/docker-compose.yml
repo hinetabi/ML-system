@@ -3,7 +3,6 @@ services:
       
   model_predictor_1:
     image: ${IMAGE_NAME}:${IMAGE_TAG}
-    restart: no
     container_name: model_predictor1
     volumes:
       - ../../data/raw_data:/sample_solution/data/raw_data
@@ -23,7 +22,6 @@ services:
 
   model_predictor_2:
     image: ${IMAGE_NAME}:${IMAGE_TAG} 
-    restart: no
     container_name: model_predictor2
     volumes:
       - ../../data/raw_data:/sample_solution/data/raw_data
@@ -46,7 +44,6 @@ services:
     ports:
       - ${PORT}:80
     container_name: nginx
-    restart: no
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     extra_hosts:
@@ -58,8 +55,3 @@ services:
     depends_on:
       - model_predictor_1
       - model_predictor_2
-
-networks:
-  app-network:
-    name: custom_network
-    external: true
