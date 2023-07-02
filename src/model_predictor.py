@@ -43,7 +43,7 @@ class ModelPredictor:
         self.prob_config = {}
         self.pFile = {}
         self.train_features = {}
-
+        self.max_feq_data = {}
         for prob in ["prob-1", "prob-2"]:
             with open(
                 os.path.join(config_file_path, config_file_path_specific[prob]), "r"
@@ -61,8 +61,11 @@ class ModelPredictor:
 
             if prob == 'prob-1':
                 self.category_index[prob] = RawDataProcessor1.load_category_index(self.prob_config[prob])
+                self.max_feq_data[prob] = RawDataProcessor1.load_max_feq_dict(self.prob_config[prob])
             else:
                 self.category_index[prob] = RawDataProcessor2.load_category_index(self.prob_config[prob])
+                # self.max_feq_data[prob] = RawDataProcessor1.load_max_feq_dict(self.prob_config[prob])
+
 
             # load model
             model_uri = os.path.join(
@@ -75,7 +78,8 @@ class ModelPredictor:
 
             # load data drift
             self.pFile[prob] = pq.ParquetFile(self.prob_config[prob].train_x_path)
-            self.train_features[prob] = self.pFile[prob].read().to_pandas()
+            self.train_features[prob] = self.pFile[prob].read().to_pandas().astype("float")
+
 
         
     def detect_drift(self, feature_df, prob) -> int:
@@ -86,7 +90,7 @@ class ModelPredictor:
         for i in range(num_features):
             train_data = self.train_features[prob].iloc[:, i]
             test_data = feature_df.iloc[:, i]
-
+            
             _, p_value = stats.ks_2samp(train_data, test_data)
 
             if p_value > significance_level:
@@ -102,7 +106,17 @@ class ModelPredictor:
         # preprocess
         raw_df = pd.DataFrame(data.rows, columns=data.columns)
         print(raw_df)
+
+        # save request data for improving models
+        ModelPredictor.save_request_data(
+            raw_df, self.prob_config[prob].captured_data_dir, data.id
+        )
+
         if prob == "prob-1":
+            # handling missing data, replace missing with self.max_feq_data
+            for column in raw_df.columns:
+                raw_df[column] = raw_df[column].fillna(self.max_feq_data[prob][column])
+                
             feature_df = RawDataProcessor1.apply_category_features(
                 raw_df=raw_df,
                 categorical_cols=self.prob_config[prob].categorical_cols,
@@ -115,10 +129,6 @@ class ModelPredictor:
                 category_index=self.category_index[prob],
             )
             
-        # save request data for improving models
-        ModelPredictor.save_request_data(
-            feature_df, self.prob_config[prob].captured_data_dir, data.id
-        )
 
         prediction = self.model[prob].predict(feature_df)
         is_drifted = self.detect_drift(feature_df, prob)
